@@ -58,8 +58,7 @@ socket.on('locationMessage', (message) => {
     autoscroll()
 })
 
-socket.on('message', (message) => {
-    console.log(message)
+const renderNewMessage = (message) => {
     const html = Mustache.render(messageTemplate, {
         username: message.username,
         message: message.text,
@@ -67,6 +66,10 @@ socket.on('message', (message) => {
         color: message.color
     })
     $messages.insertAdjacentHTML('beforeend', html)
+}
+
+socket.on('message', (message) => {
+    renderNewMessage(message)
     autoscroll()
 })
 
@@ -78,23 +81,18 @@ socket.on('roomData', ({ room, users }) => {
     document.querySelector('#sidebar').innerHTML = html
 })
 
-
 $messageForm.addEventListener('submit', (e) => {
     e.preventDefault()
-
     $messageFormButton.setAttribute('disabled', 'disabled')
-
     const message = e.target.elements.message.value
     const color = e.target.elements.color.value
-
+    $messageFormInput.value = ''
+    $messageFormInput.focus()
     socket.emit('sendMessage', {message, color} , (error) => {
         $messageFormButton.removeAttribute('disabled')
-        $messageFormInput.value = ''
-        $messageFormInput.focus()
         if (error) {
             return console.log(error)
         }
-
         console.log('Message delivered!')
     })
 })
@@ -103,15 +101,11 @@ $sendLocationButton.addEventListener('click', (e) => {
     if (!navigator.geolocation) {
         return alert('Geolocation is not supported by your browser.')
     }
-
-    $sendLocationButton.setAttribute('disabled', 'disabled')
-
     navigator.geolocation.getCurrentPosition((position) => {
         socket.emit('sendLocation', {
             lat: position.coords.latitude,
             long: position.coords.longitude
         }, (message) => {
-            $sendLocationButton.removeAttribute('disabled')
             console.log(message)
         })
     })

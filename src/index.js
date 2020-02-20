@@ -2,7 +2,7 @@ const path = require('path')
 const http = require('http')
 const express = require('express')
 const socketio = require('socket.io')
-const { generateMessage, generateLocationMessage } = require('./utils/messages')
+const { generateMessage } = require('./utils/messages')
 const { addUser, removeUser, getUser, getUsersInRoom } = require('./utils/users')
 
 const app = express()
@@ -25,7 +25,6 @@ io.on('connection', (socket) => {
         }
 
         socket.join(user.room)
-
         socket.emit('message', generateMessage('System', 'Welcome!'))
         socket.broadcast.to(user.room).emit('message', generateMessage('System', `${user.username} has joined!`))
 
@@ -39,19 +38,16 @@ io.on('connection', (socket) => {
 
     socket.on('sendMessage', (messageObj, callback) => {
         const user = getUser(socket.id)
-        io.to(user.room).emit('message', generateMessage(user.username, messageObj.message, messageObj.color))
-        callback('Delivered!')
+        if (user) {
+            io.to(user.room).emit('message', generateMessage(user.username, messageObj.message, messageObj.color))
+            callback('Delivered!')
+        }
+        
     })
 
-    socket.on('sendLocation', (coords, callback) => {
-        const user = getUser(socket.id)
-        io.to(user.room).emit('locationMessage', generateLocationMessage(user.username, `https://google.com/maps?q=${coords.lat},${coords.long}`))
-        callback('Location shared!')
-    })
 
     socket.on('disconnect', () => {
         const user = removeUser(socket.id)
-
         if (user) {
             io.to(user.room).emit('message', generateMessage('System', `${user.username} has left!`))
             io.to(user.room).emit('roomData', {

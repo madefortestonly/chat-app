@@ -15,6 +15,15 @@ const sidebarTemplate = document.querySelector('#sidebar-template').innerHTML
 // Options
 const { username, room } = Qs.parse(location.search, { ignoreQueryPrefix: true })
 
+
+function update(jscolor) {
+    document.getElementById('messagearea').style.color = '#' + jscolor
+}
+
+function setColor() {
+    document.getElementById('messagearea').style.color = document.querySelector('.jscolor').style.backgroundColor
+}
+
 const autoscroll = () => {
     // New message element
     const $newMessage = $messages.lastElementChild
@@ -46,7 +55,6 @@ socket.on('locationMessage', (message) => {
         createdAt: moment(message.createdAt).format('hh:mm a')
     })
     $messages.insertAdjacentHTML('beforeend', html)
-
     autoscroll()
 })
 
@@ -55,10 +63,10 @@ socket.on('message', (message) => {
     const html = Mustache.render(messageTemplate, {
         username: message.username,
         message: message.text,
-        createdAt: moment(message.createdAt).format('hh:mm a')
+        createdAt: moment(message.createdAt).format('hh:mm a'),
+        color: message.color
     })
     $messages.insertAdjacentHTML('beforeend', html)
-
     autoscroll()
 })
 
@@ -70,14 +78,16 @@ socket.on('roomData', ({ room, users }) => {
     document.querySelector('#sidebar').innerHTML = html
 })
 
+
 $messageForm.addEventListener('submit', (e) => {
     e.preventDefault()
 
     $messageFormButton.setAttribute('disabled', 'disabled')
 
     const message = e.target.elements.message.value
+    const color = e.target.elements.color.value
 
-    socket.emit('sendMessage', message, (error) => {
+    socket.emit('sendMessage', {message, color} , (error) => {
         $messageFormButton.removeAttribute('disabled')
         $messageFormInput.value = ''
         $messageFormInput.focus()

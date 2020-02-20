@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "server": "nohup node ./src/index.js > output.log &",
     "dev": "env-cmd -f ./config/dev.env nodemon ./src/index.js -e js,html,css",
     "start": "node src/index.js"
   },
